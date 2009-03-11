@@ -14,8 +14,8 @@ version = '0.2.0'
 spec = Gem::Specification.new do |s|
   s.name = name
   s.version = version
-  s.summary = "Drop-in thumbnailing for your Rack stack."
-  s.description = "Drop-in thumbnailing middleware for your Rack stack (Merb, Sinatra, Rails, etc)."
+  s.summary = "Drop-in image thumbnailing for your Rack stack."
+  s.description = "Drop-in image thumbnailing middleware for your Rack stack (Merb, Sinatra, Rails, etc)."
   s.author = "Aleksander Williams"
   s.email = "alekswilliams@earthlink.net"
   s.homepage = "http://github.com/akdubya/rack-thumb"
@@ -55,7 +55,7 @@ end
 
 Rake::RDocTask.new do |t|
   t.rdoc_dir = 'rdoc'
-  t.title = "Rack Thumb: Drop-in thumbnailing for your Rack stack"
+  t.title = "Rack Thumb: Drop-in image thumbnailing for your Rack stack"
   t.options << '--line-numbers' << '--inline-source' << '-A cattr_accessor=object'
   t.options << '--charset' << 'utf-8'
   t.rdoc_files.include('README.rdoc')
