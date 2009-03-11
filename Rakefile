@@ -9,7 +9,7 @@ task :default => [:test]
 task :spec => :test
 
 name = 'rack-thumb'
-version = '0.2.0'
+version = '0.2.1'
 
 spec = Gem::Specification.new do |s|
   s.name = name

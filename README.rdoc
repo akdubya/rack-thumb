@@ -6,7 +6,7 @@ and maximum flexibility.
 
 == Getting Started
 
-You will need ImageMagick and the Mapel gem (http://github.com/akdubya/mapel/tree).
+You will need ImageMagick and the Mapel gem (http://github.com/akdubya/mapel).
 
   gem install akdubya-rack-thumb
 
