@@ -9,7 +9,7 @@ task :default => [:test]
 task :spec => :test
 
 name = 'rack-thumb'
-version = '0.2.1'
+version = '0.2.2'
 
 spec = Gem::Specification.new do |s|
   s.name = name
@@ -23,7 +23,7 @@ spec = Gem::Specification.new do |s|
   s.has_rdoc = true
   s.files = %w(Rakefile README.rdoc) + Dir.glob("{lib,spec,example}/**/*")
   s.require_path = "lib"
-  s.add_dependency("mapel", ">= 0.1.1")
+  s.add_dependency("akdubya-mapel", ">= 0.1.1")
 end
 
 Rake::GemPackageTask.new(spec) do |p|
