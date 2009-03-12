@@ -227,15 +227,6 @@ module Rack
       dimensions.any? ? dimensions : throw(:halt, bad_request)
     end
 
-    def resolve(uri)
-      uri = URI.parse(uri) unless uri.respond_to?(:scheme)
-      if uri.scheme == "file"
-        ::File.expand_path(uri.opaque || uri.path)
-      else
-        uri.to_s
-      end
-    end
-
     # Creates a new tempfile
     def create_tempfile
       Tempfile.new(::File.basename(@path)).tap { |f| f.close }
