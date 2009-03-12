@@ -69,12 +69,16 @@ You are free to set caching policies, etc. however you like. Incoming HEAD reque
 skip the rendering step.
 
 There are a decent number of specs but the middleware isn't very strict at
-checking options at the moment, and I'm sure there are a few edge cases that need
-to be looked into. Comments, suggestions and bug reports are welcome.
+checking setup options at the moment, and I'm sure there are a few edge cases
+that need to be looked into. Comments, suggestions and bug reports are welcome.
 
 == Meta
 
 Written by Aleks Williams (http://github.com/akdubya)
+
+Credit goes to the repoze.bitblt (http://pypi.python.org/pypi/repoze.bitblt)
+team for the clever url-signing implementation. My original security scheme
+was stupidly complex.
 
 Released under the MIT License: www.opensource.org/licenses/mit-license.php
 
