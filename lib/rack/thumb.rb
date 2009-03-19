@@ -192,22 +192,11 @@ module Rack
     # Serves the thumbnail. If this is a HEAD request we strip the body as well
     # as the content length because the render was never run.
     def serve
-      lastmod = Time.now.httpdate
-      # Use origin content type?
-      ctype = Mime.mime_type(::File.extname(@path), 'text/plain')
-
       response = if head?
         @source_headers.delete("Content-Length")
-        [200, @source_headers.merge(
-            "Last-Modified"  => lastmod,
-            "Content-Type"   => ctype
-          ), []]
+        [200, @source_headers, []]
       else
-        [200, @source_headers.merge(
-            "Last-Modified"  => lastmod,
-            "Content-Type"   => ctype,
-            "Content-Length" => ::File.size(@thumb.path).to_s
-          ), self]
+        [200, @source_headers.merge("Content-Length" => ::File.size(@thumb.path).to_s), self]
       end
 
       throw :halt, response
