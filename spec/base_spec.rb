@@ -82,13 +82,13 @@ describe "Rack::Thumb Base" do
     res.body.bytesize.should == 6221
   end
 
-  it "should return forbidden if the signature is invalid" do
+  it "should return bad request if the signature is invalid" do
     request = Rack::MockRequest.new(Rack::Thumb.new(@app, :keylength => 16,
       :secret => "test"))
 
     res = request.get("/media/imagick_50x100-sw-9922d04b14049f85.jpg")
-    res.should.be.forbidden
-    res.body.should == "Bad thumbnail signature in /media/imagick_50x100-sw-9922d04b14049f85.jpg\n"
+    res.should.be.client_error
+    res.body.should == "Bad thumbnail parameters in /media/imagick_50x100-sw-9922d04b14049f85.jpg\n"
   end
 
   it "should return bad request if the dimensions are bad" do

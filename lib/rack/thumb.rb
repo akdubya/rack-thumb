@@ -47,10 +47,10 @@ module Rack
 #   that is unique to every url. Using this option, only thumbnails requested
 #   by your templates will be valid. Example:
 #
-#     use Rack::Thumb(
+#     use Rack::Thumb, {
 #       :secret => "My secret",
-#       :key_length => "16"       # => Only use 16 digits of the SHA-1 key
-#     )
+#       :keylength => "16"        # => Only use 16 digits of the SHA-1 key
+#     }
 #
 #   You can then use your +secret+ to generate secure links in your templates:
 #
@@ -132,7 +132,7 @@ module Rack
     def extract_signed_meta(match)
       base, dim, grav, sig, ext = match.captures
       digest = Digest::SHA1.hexdigest("#{base}_#{dim}#{grav}#{ext}#{@secret}")[0..@keylen-1]
-      throw(:halt, forbidden) unless sig && (sig == digest)
+      throw(:halt, bad_request) unless sig && (sig == digest)
       [base + ext, dim, grav]
     end
 
@@ -228,13 +228,6 @@ module Rack
        [body]]
     end
 
-    def forbidden
-      body = "Bad thumbnail signature in #{@path}\n"
-      [403, {"Content-Type" => "text/plain",
-         "Content-Length" => body.size.to_s},
-       [body]]
-    end
-
     def head?
       @env["REQUEST_METHOD"] == "HEAD"
     end
@@ -245,6 +238,10 @@ module Rack
           yield part
         end
       }
+    end
+
+    def to_path
+      @thumb.path
     end
   end
 end

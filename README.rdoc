@@ -49,10 +49,10 @@ render requests you can set up <tt>Rack::Thumb</tt> to check for a <tt>SHA-1</tt
 signature that is unique to every url. Using this option, only thumbnails requested
 by your templates will be valid. Example:
 
-  use Rack::Thumb(
+  use Rack::Thumb, {
     :secret => "My secret",   # => Don't tell anyone!
-    :key_length => "16"       # => Only use 16 digits of the SHA-1 key
-  )
+    :keylength => "16"        # => Only use 16 digits of the SHA-1 key
+  }
 
 You can then use your +secret+ to generate secure links in your templates using
 Ruby's built-in <tt>Digest::SHA1</tt> library:
