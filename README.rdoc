@@ -8,7 +8,7 @@ and maximum flexibility.
 
 You will need ImageMagick and the Mapel gem (http://github.com/akdubya/mapel).
 
-  gem install akdubya-rack-thumb
+  gem install rack-thumb
 
   # rackup.ru
   require 'myapp'
