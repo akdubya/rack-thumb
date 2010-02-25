@@ -1,64 +1,55 @@
+require 'rubygems'
 require 'rake'
-require 'rake/testtask'
-require 'rake/clean'
-require 'rake/gempackagetask'
-require 'rake/rdoctask'
-require 'fileutils'
-
-task :default => [:test]
-task :spec => :test
 
 name = 'rack-thumb'
 version = '0.2.2'
 
-spec = Gem::Specification.new do |s|
-  s.name = name
-  s.version = version
-  s.summary = "Drop-in image thumbnailing for your Rack stack."
-  s.description = "Drop-in image thumbnailing middleware for your Rack stack (Merb, Sinatra, Rails, etc)."
-  s.author = "Aleksander Williams"
-  s.email = "alekswilliams@earthlink.net"
-  s.homepage = "http://github.com/akdubya/rack-thumb"
-  s.platform = Gem::Platform::RUBY
-  s.has_rdoc = true
-  s.files = %w(Rakefile README.rdoc) + Dir.glob("{lib,spec,example}/**/*")
-  s.require_path = "lib"
-  s.add_dependency("akdubya-mapel", ">= 0.1.1")
+begin
+  require 'jeweler'
+  Jeweler::Tasks.new do |gem|
+    gem.name = name
+    gem.version = version
+    gem.summary = %Q{Drop-in image thumbnailing for your Rack stack.}
+    gem.email = "alekswilliams@earthlink.net"
+    gem.homepage = "http://github.com/akdubya/rack-thumb"
+    gem.authors = ["Aleksander Williams"]
+    gem.add_dependency "mapel", ">= 0.1.1"
+    gem.add_development_dependency "bacon", ">= 0"
+    # gem is a Gem::Specification... see http://www.rubygems.org/read/chapter/20 for additional settings
+  end
+  Jeweler::GemcutterTasks.new
+rescue LoadError
+  puts "Jeweler (or a dependency) not available. Install it with: gem install jeweler"
 end
 
-Rake::GemPackageTask.new(spec) do |p|
-  p.need_tar = true if RUBY_PLATFORM !~ /mswin/
+require 'rake/testtask'
+Rake::TestTask.new(:spec) do |spec|
+  spec.libs << 'lib' << 'spec'
+  spec.pattern = 'spec/**/*_spec.rb'
+  spec.verbose = true
 end
 
-desc "Install as a system gem"
-task :install => [ :package ] do
-  sh %{sudo gem install pkg/#{name}-#{version}.gem}
-end
-
-desc "Uninstall as a system gem"
-task :uninstall => [ :clean ] do
-  sh %{sudo gem uninstall #{name}}
-end
-
-desc "Create a gemspec file"
-task :make_spec do
-  File.open("#{name}.gemspec", "w") do |file|
-    file.puts spec.to_ruby
+begin
+  require 'rcov/rcovtask'
+  Rcov::RcovTask.new do |spec|
+    spec.libs << 'spec'
+    spec.pattern = 'spec/**/*_spec.rb'
+    spec.verbose = true
+  end
+rescue LoadError
+  task :rcov do
+    abort "RCov is not available. In order to run rcov, you must: sudo gem install spicycode-rcov"
   end
 end
 
-Rake::TestTask.new(:test) do |t|
-  t.libs << "spec"
-  t.test_files = FileList['spec/*_spec.rb']
-  t.verbose = true
-end
+task :spec => :check_dependencies
 
-Rake::RDocTask.new do |t|
-  t.rdoc_dir = 'rdoc'
-  t.title = "Rack Thumb: Drop-in image thumbnailing for your Rack stack"
-  t.options << '--line-numbers' << '--inline-source' << '-A cattr_accessor=object'
-  t.options << '--charset' << 'utf-8'
-  t.rdoc_files.include('README.rdoc')
-  t.rdoc_files.include('lib/rack/rack-thumb.rb')
-  t.rdoc_files.include('lib/rack/rack-thumb/*.rb')
+task :default => :spec
+
+require 'rake/rdoctask'
+Rake::RDocTask.new do |rdoc|
+  rdoc.rdoc_dir = 'rdoc'
+  rdoc.title = "rack-thumb #{version}"
+  rdoc.rdoc_files.include('README*')
+  rdoc.rdoc_files.include('lib/**/*.rb')
 end
