@@ -1,6 +1,6 @@
 require File.dirname(__FILE__) + '/helpers'
 
-describe "Rack::Thumb Base" do
+describe Rack::Thumb do
   before do
     @app = Rack::File.new(::File.dirname(__FILE__))
   end
@@ -11,8 +11,8 @@ describe "Rack::Thumb Base" do
     res = request.get("/media/imagick_50x.jpg")
     res.should.be.ok
     res.content_type.should == "image/jpeg"
-    res.content_length.should == 6221
-    res.body.bytesize.should == 6221
+    info = image_info(res.body)
+    info[:dimensions].should == [50, 52]
   end
 
   it "should render a thumbnail with height only" do
@@ -21,8 +21,8 @@ describe "Rack::Thumb Base" do
     res = request.get("/media/imagick_x50.jpg")
     res.should.be.ok
     res.content_type.should == "image/jpeg"
-    res.content_length.should == 5912
-    res.body.bytesize.should == 5912
+    info = image_info(res.body)
+    info[:dimensions].should == [48, 50]
   end
 
   it "should render a thumbnail with width and height (crop-resize)" do
@@ -31,8 +31,8 @@ describe "Rack::Thumb Base" do
     res = request.get("/media/imagick_50x50.jpg")
     res.should.be.ok
     res.content_type.should == "image/jpeg"
-    res.content_length.should == 6074
-    res.body.bytesize.should == 6074
+    info = image_info(res.body)
+    info[:dimensions].should == [50, 50]
   end
 
   it "should render a thumbnail with width, height and gravity (crop-resize)" do
@@ -41,8 +41,8 @@ describe "Rack::Thumb Base" do
     res = request.get("/media/imagick_50x100-sw.jpg")
     res.should.be.ok
     res.content_type.should == "image/jpeg"
-    res.content_length.should == 6696
-    res.body.bytesize.should == 6696
+    info = image_info(res.body)
+    info[:dimensions].should == [50, 100]
   end
 
   it "should render a thumbnail with a signature" do
@@ -53,8 +53,8 @@ describe "Rack::Thumb Base" do
     res = request.get("/media/imagick_50x100-sw-#{sig}.jpg")
     res.should.be.ok
     res.content_type.should == "image/jpeg"
-    res.content_length.should == 6696
-    res.body.bytesize.should == 6696
+    info = image_info(res.body)
+    info[:dimensions].should == [50, 100]
   end
 
   it "should not render a thumbnail that exceeds the original image's dimensions" do
@@ -63,10 +63,8 @@ describe "Rack::Thumb Base" do
     res = request.get("/media/imagick_1000x1000.jpg")
     res.should.be.ok
     res.content_type.should == "image/jpeg"
-    # There is a miniscule difference between this and the original
-    # because this is run through the processor.
-    res.content_length.should == 97373
-    res.body.bytesize.should == 97373
+    info = image_info(res.body)
+    info[:dimensions].should == [572, 591]
   end
 
   it "should work with non-file source bodies" do
@@ -78,8 +76,8 @@ describe "Rack::Thumb Base" do
     res = request.get("/media/imagick_50x.jpg")
     res.should.be.ok
     res.content_type.should == "image/jpeg"
-    res.content_length.should == 6221
-    res.body.bytesize.should == 6221
+    info = image_info(res.body)
+    info[:dimensions].should == [50, 52]
   end
 
   it "should return bad request if the signature is invalid" do
