@@ -176,14 +176,16 @@ module Rack
     # Renders a thumbnail from the source image. Returns a Tempfile.
     def render_thumbnail(dim, grav)
       gravity = grav ? TH_GRAV[grav] : :center
-      dimensions = parse_dimensions(dim)
+      width, height = parse_dimensions(dim)
+      origin_width, origin_height = Mapel.info(@image.path)[:dimensions]
+      width = [width, origin_width].min if width
+      height = [height, origin_height].min if height
       output = create_tempfile
       cmd = Mapel(@image.path).gravity(gravity)
-      width, height = dimensions
       if width && height
         cmd.resize!(width, height)
       else
-        cmd.resize(width, height, 0, 0, :>)
+        cmd.resize(width, height, 0, 0, '>')
       end
       cmd.to(output.path).run
       output
