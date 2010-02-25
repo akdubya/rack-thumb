@@ -2,7 +2,7 @@ require 'rubygems'
 require 'rake'
 
 name = 'rack-thumb'
-version = '0.2.2'
+version = '0.2.3'
 
 begin
   require 'jeweler'
