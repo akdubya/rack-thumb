@@ -7,7 +7,7 @@ require 'tempfile'
 Tempfile.class_eval do
   def make_tmpname(basename, n)
     ext = nil
-    sprintf("%s%d-%d%s", basename.to_s.gsub(/\.\w+$/) { |s| ext = s; '' }, $$, n, ext)
+    sprintf("%s%d-%d%s", basename.to_s.gsub(/\.\w+$/) { |s| ext = s; '' }, $$ || 0, n || 0, ext)
   end
 end
 
