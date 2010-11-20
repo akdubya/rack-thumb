@@ -107,7 +107,7 @@ module Rack
 
       response || @app.call(env)
     end
-    
+
     # Extracts filename and options from the path.
     def extract_meta(match)
       result = if @keylen
