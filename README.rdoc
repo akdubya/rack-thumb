@@ -25,7 +25,9 @@ serving source images (I'm using it with an app that serves images from CouchDB)
 
 See the example directory for more <tt>Rack</tt> configurations. Because
 thumbnailing is an expensive operation, you should run <tt>Rack::Thumb</tt>
-behind a cache, such as the excellent <tt>Rack::Cache</tt>.
+behind a cache, such as the excellent <tt>Rack::Cache</tt>. Or you could
+configure <tt>Rack::Thumb</tt> to write the processed image to the location
+requested and let your Webserver perform the delivery (see Writing).
 
 == Rendering Options
 
@@ -61,6 +63,26 @@ Ruby's built-in <tt>Digest::SHA1</tt> library:
   /media/foobar_120x250-a267c193a7eff046.jpg    # => Returns a bad request error
 
 There are no helper modules just yet but it's easy enough to roll your own.
+
+== Writing
+
+As a quick solution for caching you may let <tt>Rack::Thumb</tt> write a generated
+image to the location that was requested. That allows your Webserver to deliver the
+file directly without hitting your application on subsequent requests.
+
+=== Configuration Example
+
+Assuming you use Rails 3 and your public image path is /media, your configuration
+may be like the following (put it into an initializer):
+
+  require "rack/thumb"
+
+  Manager::Application.config.middleware.use Rack::Thumb,
+    :write => true
+
+  Manager::Application.config.middleware.use Rack::Static,
+    :root => "#{Rails.root}/public",
+    :urls => ["/media"]
 
 == Deep Thoughts
 
