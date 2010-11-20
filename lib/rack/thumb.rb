@@ -77,6 +77,7 @@ module Rack
       @app = app
       @keylen = options[:keylength]
       @secret = options[:secret]
+      @write = options[:write]
       @routes = generate_routes(options[:urls] || ["/"], options[:prefix])
     end
 
@@ -107,6 +108,7 @@ module Rack
             @source, dim, grav = extract_meta(match)
             @image = get_source_image
             @thumb = render_thumbnail(dim, grav) unless head?
+            write if !!@write
             serve
           end
         end
@@ -155,6 +157,7 @@ module Rack
       end
 
       @source_headers = headers
+      @source_body = body
 
       if !head?
         if body.respond_to?(:path)
@@ -189,6 +192,16 @@ module Rack
       end
       cmd.to(output.path).run
       output
+    end
+
+    # Writes thumbnail to requested path.
+    # To enable writing, configure with :write => true
+    def write
+      path = ::File.join(@source_body.root, @path)
+      f = ::File.open(path, "w")
+      f.binmode
+      f.write(::File.read(@thumb.path))
+      f.close
     end
 
     # Serves the thumbnail. If this is a HEAD request we strip the body as well
