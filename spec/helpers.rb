@@ -1,3 +1,4 @@
+require 'rubygems'
 require 'bacon'
 require File.dirname(File.dirname(__FILE__)) + '/lib/rack/thumb'
 require 'rack/mock'
