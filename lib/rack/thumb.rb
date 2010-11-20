@@ -201,7 +201,7 @@ module Rack
       dimensions = meta.split('x').map do |dim|
         if dim.empty?
           nil
-        elsif dim[0].to_i == 0
+        elsif dim.index('0') == 0
           throw :halt, bad_request
         else
           dim.to_i
