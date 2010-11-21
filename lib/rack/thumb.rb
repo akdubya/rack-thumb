@@ -108,7 +108,6 @@ module Rack
             @source, dim, grav = extract_meta(match)
             @image = get_source_image
             @thumb = render_thumbnail(dim, grav) unless head?
-            write if !!@write
             serve
           end
         end
@@ -183,7 +182,8 @@ module Rack
       origin_width, origin_height = Mapel.info(@image.path)[:dimensions]
       width = [width, origin_width].min if width
       height = [height, origin_height].min if height
-      output = create_tempfile
+
+      output = !!@write ? create_file : create_tempfile
       cmd = Mapel(@image.path).gravity(gravity)
       if width && height
         cmd.resize!(width, height)
@@ -192,16 +192,6 @@ module Rack
       end
       cmd.to(output.path).run
       output
-    end
-
-    # Writes thumbnail to requested path.
-    # To enable writing, configure with :write => true
-    def write
-      path = ::File.join(@source_body.root, @path)
-      f = ::File.open(path, "w")
-      f.binmode
-      f.write(::File.read(@thumb.path))
-      f.close
     end
 
     # Serves the thumbnail. If this is a HEAD request we strip the body as well
@@ -234,6 +224,11 @@ module Rack
     # Creates a new tempfile
     def create_tempfile
       Tempfile.new(::File.basename(@path)).tap { |f| f.close }
+    end
+
+    # Creates a file at the requested location
+    def create_file
+      ::File.open(::File.join(@source_body.root, @path), "w+").tap { |f| f.close }
     end
 
     def bad_request
