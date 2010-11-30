@@ -1,15 +1,7 @@
 require 'rack'
 require 'mapel'
 require 'digest/sha1'
-
 require 'tempfile'
-
-Tempfile.class_eval do
-  def make_tmpname(basename, n)
-    ext = nil
-    sprintf("%s%d-%d%s", basename.to_s.gsub(/\.\w+$/) { |s| ext = s; '' }, $$ || 0, n || 0, ext)
-  end
-end
 
 module Rack
 

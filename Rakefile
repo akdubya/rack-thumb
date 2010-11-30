@@ -13,9 +13,9 @@ begin
     gem.email = "alekswilliams@earthlink.net"
     gem.homepage = "http://github.com/akdubya/rack-thumb"
     gem.authors = ["Aleksander Williams"]
+    gem.add_dependency "rack", ">= 0"
     gem.add_dependency "mapel", ">= 0.1.6"
     gem.add_development_dependency "bacon", ">= 0"
-    # gem is a Gem::Specification... see http://www.rubygems.org/read/chapter/20 for additional settings
   end
   Jeweler::GemcutterTasks.new
 rescue LoadError
