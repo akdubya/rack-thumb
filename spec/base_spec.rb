@@ -1,165 +1,190 @@
 require File.expand_path(File.dirname(__FILE__) + '/helpers')
 
 describe Rack::Thumb do
-  before do
-    @app = Rack::File.new(::File.dirname(__FILE__))
+
+  def mock_request(options = {})
+    Rack::MockRequest.new(Rack::Builder.new do
+      use Rack::Thumb, options
+      run Rack::File.new(::File.dirname(__FILE__))
+    end)
   end
 
-  it "should render a thumbnail with width only" do
-    request = Rack::MockRequest.new(Rack::Thumb.new(@app))
 
-    res = request.get("/media/imagick_50x.jpg")
-    res.should.be.ok
-    res.content_type.should == "image/jpeg"
-    info = image_info(res.body)
+  it "should render a thumbnail with width only" do
+    response = mock_request.get("/media/imagick_50x.jpg")
+
+    response.should.be.ok
+    response.content_type.should == "image/jpeg"
+    info = image_info(response.body)
     info[:dimensions].should == [50, 52]
   end
 
   it "should render a thumbnail with height only" do
-    request = Rack::MockRequest.new(Rack::Thumb.new(@app))
+    response = mock_request.get("/media/imagick_x50.jpg")
 
-    res = request.get("/media/imagick_x50.jpg")
-    res.should.be.ok
-    res.content_type.should == "image/jpeg"
-    info = image_info(res.body)
+    response.should.be.ok
+    response.content_type.should == "image/jpeg"
+    info = image_info(response.body)
     info[:dimensions].should == [48, 50]
   end
 
   it "should render a thumbnail with width and height (crop-resize)" do
-    request = Rack::MockRequest.new(Rack::Thumb.new(@app))
+    response = mock_request.get("/media/imagick_50x50.jpg")
 
-    res = request.get("/media/imagick_50x50.jpg")
-    res.should.be.ok
-    res.content_type.should == "image/jpeg"
-    info = image_info(res.body)
+    response.should.be.ok
+    response.content_type.should == "image/jpeg"
+    info = image_info(response.body)
     info[:dimensions].should == [50, 50]
   end
 
   it "should render a thumbnail with width, height and gravity (crop-resize)" do
-    request = Rack::MockRequest.new(Rack::Thumb.new(@app))
+    response = mock_request.get("/media/imagick_50x100-sw.jpg")
 
-    res = request.get("/media/imagick_50x100-sw.jpg")
-    res.should.be.ok
-    res.content_type.should == "image/jpeg"
-    info = image_info(res.body)
-    info[:dimensions].should == [50, 100]
-  end
-
-  it "should render a thumbnail with a signature" do
-    request = Rack::MockRequest.new(Rack::Thumb.new(@app, :keylength => 16,
-      :secret => "test"))
-
-    sig = Digest::SHA1.hexdigest("/media/imagick_50x100-sw.jpgtest")[0..15]
-    res = request.get("/media/imagick_50x100-sw-#{sig}.jpg")
-    res.should.be.ok
-    res.content_type.should == "image/jpeg"
-    info = image_info(res.body)
+    response.should.be.ok
+    response.content_type.should == "image/jpeg"
+    info = image_info(response.body)
     info[:dimensions].should == [50, 100]
   end
 
   it "should not render a thumbnail that exceeds the original image's dimensions" do
-    request = Rack::MockRequest.new(Rack::Thumb.new(@app))
+    response = mock_request.get("/media/imagick_1000x1000.jpg")
 
-    res = request.get("/media/imagick_1000x1000.jpg")
-    res.should.be.ok
-    res.content_type.should == "image/jpeg"
-    info = image_info(res.body)
+    response.should.be.ok
+    response.content_type.should == "image/jpeg"
+    info = image_info(response.body)
     info[:dimensions].should == [572, 591]
   end
 
-  it "should work with non-file source bodies" do
-    app = lambda { |env| [200, {"Content-Type" => "image/jpeg"},
-        [::File.read(::File.dirname(__FILE__) + "/media/imagick.jpg")]] }
+  it "should render a thumbnail with a signature" do
+    signature = Digest::SHA1.hexdigest("/media/imagick_50x100-sw.jpgtest")[0..15]
+    response  = mock_request(:keylength => 16, :secret => 'test').
+                  get("/media/imagick_50x100-sw-#{ signature }.jpg")
 
-    request = Rack::MockRequest.new(Rack::Thumb.new(app))
-
-    res = request.get("/media/imagick_50x.jpg")
-    res.should.be.ok
-    res.content_type.should == "image/jpeg"
-    info = image_info(res.body)
-    info[:dimensions].should == [50, 52]
-  end
-
-  it "should return bad request if the signature is invalid" do
-    request = Rack::MockRequest.new(Rack::Thumb.new(@app, :keylength => 16,
-      :secret => "test"))
-
-    res = request.get("/media/imagick_50x100-sw-9922d04b14049f85.jpg")
-    res.should.be.client_error
-    res.body.should == "Bad thumbnail parameters in /media/imagick_50x100-sw-9922d04b14049f85.jpg\n"
-  end
-
-  it "should return bad request if the dimensions are bad" do
-    request = Rack::MockRequest.new(Rack::Thumb.new(@app))
-
-    res = request.get("/media/imagick_0x50.jpg")
-    res.should.be.client_error
-    res.body.should == "Bad thumbnail parameters in /media/imagick_0x50.jpg\n"
-  end
-
-  it "should return bad request if dimensions contain leading zeroes" do
-    request = Rack::MockRequest.new(Rack::Thumb.new(@app))
-
-    res = request.get("/media/imagick_50x050.jpg")
-    res.should.be.client_error
-    res.body.should == "Bad thumbnail parameters in /media/imagick_50x050.jpg\n"
-  end
-
-  it "should return the application's response if the source file is not found" do
-    request = Rack::MockRequest.new(Rack::Thumb.new(@app))
-
-    res = request.get("/media/dummy_50x50.jpg")
-    res.should.be.not_found
-    res.body.should == "File not found: /media/dummy.jpg\n"
-  end
-
-  it "should return the application's response if it does not recognize render options" do
-    request = Rack::MockRequest.new(Rack::Thumb.new(@app, :keylength => 16,
-      :secret => "test"))
-
-    res = request.get("/media/imagick_50x50!.jpg")
-    res.should.be.not_found
-    res.body.should == "File not found: /media/imagick_50x50!.jpg\n"
+    response.should.be.ok
+    response.content_type.should == "image/jpeg"
+    info = image_info(response.body)
+    info[:dimensions].should == [50, 100]
   end
 
   it "should pass non-thumbnail image requests to the application" do
-    request = Rack::MockRequest.new(Rack::Thumb.new(@app, :keylength => 16,
-      :secret => "test"))
+    response = mock_request.get("/media/imagick.jpg")
 
-    res = request.get("/media/imagick.jpg")
-    res.should.be.ok
-    res.content_type.should == "image/jpeg"
-    res.content_length.should == 97374
-    res.body.bytesize.should == 97374
+    response.should.be.ok
+    response.content_type.should == "image/jpeg"
+    response.content_length.should == 97374
+    response.body.bytesize.should == 97374
   end
 
   it "should not render on a HEAD request" do
-    request = Rack::MockRequest.new(Rack::Thumb.new(@app))
+    response = mock_request.request("HEAD", "/media/imagick_50x50.jpg")
 
-    res = request.request("HEAD", "/media/imagick_50x50.jpg")
-    res.should.be.ok
-    res.content_type.should == "image/jpeg"
-    res.content_length.should.be.nil
-    res.body.bytesize.should == 0
+    response.should.be.ok
+    response.content_type.should == "image/jpeg"
+    response.content_length.should.be.nil
+    response.body.bytesize.should == 0
   end
 
   it "should preserve any extra headers provided by the downstream app" do
-    app = lambda { |env| [200, {"X-Foo" => "bar", "Content-Type" => "image/jpeg"},
-        ::File.open(::File.dirname(__FILE__) + "/media/imagick.jpg")] }
+    app = lambda do |env|
+      [ 200,
+        { "X-Foo" => "bar", "Content-Type" => "image/jpeg" },
+        ::File.open(::File.dirname(__FILE__) + "/media/imagick.jpg") ]
+    end
 
-    request = Rack::MockRequest.new(Rack::Thumb.new(app))
+    response = Rack::MockRequest.new(app).request("HEAD",
+                                                  "/media/imagick_50x50.jpg")
 
-    res = request.request("HEAD", "/media/imagick_50x50.jpg")
-    res.should.be.ok
-    res.content_type.should == "image/jpeg"
-    res.content_length.should.be.nil
-    res.headers["X-Foo"].should == "bar"
+    response.should.be.ok
+    response.content_type.should == "image/jpeg"
+    response.content_length.should.be.nil
+    response.headers["X-Foo"].should == "bar"
   end
 
-  it "should forward POST/PUT/DELETE requests to the downstream app" do
-    request = Rack::MockRequest.new(Rack::Thumb.new(@app))
+  it "should forward POST requests to the downstream app" do
+    response = mock_request.post("/media/imagick_50x50.jpg")
 
-    res = request.post("/media/imagick_50x50.jpg")
-    res.should.not.be.successful
+    response.should.not.be.successful
   end
+
+  it "should forward PUT requests to the downstream app" do
+    response = mock_request.put("/media/imagick_50x50.jpg")
+
+    response.should.not.be.successful
+  end
+
+  it "should forward DELETE requests to the downstream app" do
+    response = mock_request.delete("/media/imagick_50x50.jpg")
+
+    response.should.not.be.successful
+  end
+
+  it "should work with non-file source bodies" do
+    app = Rack::Builder.new do
+      use Rack::Thumb
+
+      run(lambda do |env|
+            [ 200,
+              { "Content-Type" => "image/jpeg" },
+              ::File.open(::File.dirname(__FILE__) + "/media/imagick.jpg") ]
+          end)
+    end
+
+    response = Rack::MockRequest.new(app).get("/media/imagick_50x.jpg")
+
+    response.should.be.ok
+    response.content_type.should == "image/jpeg"
+    info = image_info(response.body)
+    info[:dimensions].should == [50, 52]
+  end
+
+  it "should return bad request with width of 0" do
+    response = mock_request.get("/media/imagick_0x50.jpg")
+
+    response.should.be.client_error
+    response.body.should == "Bad thumbnail parameters in /media/imagick_0x50.jpg\n"
+  end
+
+  it "should return bad request with height of 0" do
+    response = mock_request.get("/media/imagick_50x0.jpg")
+
+    response.should.be.client_error
+    response.body.should == "Bad thumbnail parameters in /media/imagick_50x0.jpg\n"
+  end
+
+  it "should return bad request when height has leading zero" do
+    response = mock_request.get("/media/imagick_50x050.jpg")
+
+    response.should.be.client_error
+    response.body.should == "Bad thumbnail parameters in /media/imagick_50x050.jpg\n"
+  end
+
+  it "should return bad request when width has leading zero" do
+    response = mock_request.get("/media/imagick_050x50.jpg")
+
+    response.should.be.client_error
+    response.body.should == "Bad thumbnail parameters in /media/imagick_050x50.jpg\n"
+  end
+
+  it "should return bad request if the signature is invalid" do
+    response = mock_request(:keylength => 16, :secret => 'test').
+                 get("/media/imagick_50x100-sw-9922d04b14049f85.jpg")
+
+    response.should.be.client_error
+    response.body.should == "Bad thumbnail parameters in /media/imagick_50x100-sw-9922d04b14049f85.jpg\n"
+  end
+
+  it "should return the application's response if the source file is not found" do
+    response = mock_request.get("/media/dummy_50x50.jpg")
+
+    response.should.be.not_found
+    response.body.should == "File not found: /media/dummy.jpg\n"
+  end
+
+  it "should return the application's response if it does not recognize render options" do
+    response = mock_request.get("/media/imagick_50x50!.jpg")
+
+    response.should.be.not_found
+    response.body.should == "File not found: /media/imagick_50x50!.jpg\n"
+  end
+
 end
