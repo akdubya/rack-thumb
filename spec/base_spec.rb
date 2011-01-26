@@ -9,14 +9,17 @@ describe Rack::Thumb do
     end)
   end
 
+  def image_dimensions(response)
+    image_info(response.body)[:dimensions]
+  end
+
 
   it "should render a thumbnail with width only" do
     response = mock_request.get("/media/imagick_50x.jpg")
 
     response.should.be.ok
     response.content_type.should == "image/jpeg"
-    info = image_info(response.body)
-    info[:dimensions].should == [50, 52]
+    image_dimensions(response).should == [50, 52]
   end
 
   it "should render a thumbnail with height only" do
@@ -24,8 +27,7 @@ describe Rack::Thumb do
 
     response.should.be.ok
     response.content_type.should == "image/jpeg"
-    info = image_info(response.body)
-    info[:dimensions].should == [48, 50]
+    image_dimensions(response).should == [48, 50]
   end
 
   it "should render a thumbnail with width and height (crop-resize)" do
@@ -33,8 +35,7 @@ describe Rack::Thumb do
 
     response.should.be.ok
     response.content_type.should == "image/jpeg"
-    info = image_info(response.body)
-    info[:dimensions].should == [50, 50]
+    image_dimensions(response).should == [50, 50]
   end
 
   it "should render a thumbnail with width, height and gravity (crop-resize)" do
@@ -42,8 +43,7 @@ describe Rack::Thumb do
 
     response.should.be.ok
     response.content_type.should == "image/jpeg"
-    info = image_info(response.body)
-    info[:dimensions].should == [50, 100]
+    image_dimensions(response).should == [50, 100]
   end
 
   it "should not render a thumbnail that exceeds the original image's dimensions" do
@@ -51,8 +51,7 @@ describe Rack::Thumb do
 
     response.should.be.ok
     response.content_type.should == "image/jpeg"
-    info = image_info(response.body)
-    info[:dimensions].should == [572, 591]
+    image_dimensions(response).should == [572, 591]
   end
 
   it "should render a thumbnail with a signature" do
@@ -62,8 +61,7 @@ describe Rack::Thumb do
 
     response.should.be.ok
     response.content_type.should == "image/jpeg"
-    info = image_info(response.body)
-    info[:dimensions].should == [50, 100]
+    image_dimensions(response).should == [50, 100]
   end
 
   it "should pass non-thumbnail image requests to the application" do
@@ -133,8 +131,7 @@ describe Rack::Thumb do
 
     response.should.be.ok
     response.content_type.should == "image/jpeg"
-    info = image_info(response.body)
-    info[:dimensions].should == [50, 52]
+    image_dimensions(response).should == [50, 52]
   end
 
   it "should return bad request with width of 0" do
@@ -199,8 +196,7 @@ describe Rack::Thumb do
 
     response.should.be.ok
     response.content_type.should == "image/jpeg"
-    info = image_info(response.body)
-    info[:dimensions].should == [50, 52]
+    image_dimensions(response).should == [50, 52]
   end
 
 end
