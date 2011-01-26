@@ -187,4 +187,20 @@ describe Rack::Thumb do
     response.body.should == "File not found: /media/imagick_50x50!.jpg\n"
   end
 
+  it "should render a thumbnail when mounted as a mapped app" do
+    app = Rack::Builder.new do
+            map '/thumb/nail' do
+              use Rack::Thumb
+              run Rack::File.new(::File.dirname(__FILE__))
+            end
+          end
+
+    response = Rack::MockRequest.new(app).get("/thumb/nail/media/imagick_50x.jpg")
+
+    response.should.be.ok
+    response.content_type.should == "image/jpeg"
+    info = image_info(response.body)
+    info[:dimensions].should == [50, 52]
+  end
+
 end
