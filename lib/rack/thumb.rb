@@ -51,7 +51,7 @@ module Rack
 #
 
   class Thumb
-    RE_TH_BASE = /_([0-9]+x|x[0-9]+|[0-9]+x[0-9]+)(-(?:nw|n|ne|w|c|e|sw|s|se))?/
+    RE_TH_BASE = /_([0-9]+x|x[0-9]+|[0-9]+x[0-9]+)(!)?(-(?:nw|n|ne|w|c|e|sw|s|se))?/
     RE_TH_EXT = /(\.(?:jpg|jpeg|png|gif))/i
     TH_GRAV = {
       '-nw' => :northwest,
@@ -96,9 +96,9 @@ module Rack
         @path = env["PATH_INFO"]
         @routes.each do |regex|
           if match = @path.match(regex)
-            @source, dim, grav = extract_meta(match)
+            @source, dim, flag, grav = extract_meta(match)
             @image = get_source_image
-            @thumb = render_thumbnail(dim, grav) unless head?
+            @thumb = render_thumbnail(dim, flag, grav) unless head?
             serve
           end
         end
@@ -122,16 +122,16 @@ module Rack
 
     # Extracts filename and options from a signed path.
     def extract_signed_meta(match)
-      base, dim, grav, sig, ext = match.captures
-      digest = Digest::SHA1.hexdigest("#{base}_#{dim}#{grav}#{ext}#{@secret}")[0..@keylen-1]
+      base, dim, flag, grav, sig, ext = match.captures
+      digest = Digest::SHA1.hexdigest("#{base}_#{dim}#{flag}#{grav}#{ext}#{@secret}")[0..@keylen-1]
       throw(:halt, bad_request) unless sig && (sig == digest)
-      [base + ext, dim, grav]
+      [base + ext, dim, flag, grav]
     end
 
     # Extracts filename and options from an unsigned path.
     def extract_unsigned_meta(match)
-      base, dim, grav, ext = match.captures
-      [base + ext, dim, grav]
+      base, dim, flag, grav, ext = match.captures
+      [base + ext, dim, flag, grav]
     end
 
     # Fetch the source image from the downstream app, returning the downstream
@@ -166,20 +166,23 @@ module Rack
     end
 
     # Renders a thumbnail from the source image. Returns a Tempfile.
-    def render_thumbnail(dim, grav)
+    def render_thumbnail(dim, flag, grav)
       gravity = grav ? TH_GRAV[grav] : :center
       width, height = parse_dimensions(dim)
       origin_width, origin_height = Mapel.info(@image.path)[:dimensions]
       width = [width, origin_width].min if width
       height = [height, origin_height].min if height
       output = create_tempfile
+
       cmd = Mapel(@image.path).gravity(gravity)
-      if width && height
+      if flag == '!'
+        throw :halt, bad_request unless width && height
         cmd.resize!(width, height)
       else
         cmd.resize(width, height, 0, 0, '>')
       end
       cmd.to(output.path).run
+
       output
     end
 

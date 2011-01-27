@@ -30,20 +30,50 @@ describe Rack::Thumb do
     image_dimensions(response).should == [48, 50]
   end
 
-  it "should render a thumbnail with width and height (crop-resize)" do
+  it "should render a thumbnail with width and height" do
     response = mock_request.get("/media/imagick_50x50.jpg")
+
+    response.should.be.ok
+    response.content_type.should == "image/jpeg"
+    image_dimensions(response).should == [48, 50]
+  end
+
+  it "should render a thumbnail with width, height and crop flag" do
+    response = mock_request.get("/media/imagick_50x50!.jpg")
 
     response.should.be.ok
     response.content_type.should == "image/jpeg"
     image_dimensions(response).should == [50, 50]
   end
 
-  it "should render a thumbnail with width, height and gravity (crop-resize)" do
-    response = mock_request.get("/media/imagick_50x100-sw.jpg")
+  it "should return bad request with crop flag and no width" do
+    response = mock_request.get("/media/imagick_x50!.jpg")
+
+    response.should.be.client_error
+    response.body.should == "Bad thumbnail parameters in /media/imagick_x50!.jpg\n"
+  end
+
+  it "should return bad request with crop flag and no height" do
+    response = mock_request.get("/media/imagick_50x!.jpg")
+
+    response.should.be.client_error
+    response.body.should == "Bad thumbnail parameters in /media/imagick_50x!.jpg\n"
+  end
+
+  it "should render a thumbnail with width, height, gravity and crop flag" do
+    response = mock_request.get("/media/imagick_50x100!-sw.jpg")
 
     response.should.be.ok
     response.content_type.should == "image/jpeg"
     image_dimensions(response).should == [50, 100]
+  end
+
+  it "should ignore gravity when not cropping" do
+    response = mock_request.get("/media/imagick_50x50-sw.jpg")
+
+    response.should.be.ok
+    response.content_type.should == "image/jpeg"
+    image_dimensions(response).should == [48, 50]
   end
 
   it "should not render a thumbnail that exceeds the original image's dimensions" do
@@ -55,9 +85,39 @@ describe Rack::Thumb do
   end
 
   it "should render a thumbnail with a signature" do
+    signature = Digest::SHA1.hexdigest("/media/imagick_50x100.jpgtest")[0..15]
+    response  = mock_request(:keylength => 16, :secret => 'test').
+                  get("/media/imagick_50x100-#{ signature }.jpg")
+
+    response.should.be.ok
+    response.content_type.should == "image/jpeg"
+    image_dimensions(response).should == [50, 52]
+  end
+
+  it "should render a thumbnail with a signature and flag" do
+    signature = Digest::SHA1.hexdigest("/media/imagick_50x100!.jpgtest")[0..15]
+    response  = mock_request(:keylength => 16, :secret => 'test').
+                  get("/media/imagick_50x100!-#{ signature }.jpg")
+
+    response.should.be.ok
+    response.content_type.should == "image/jpeg"
+    image_dimensions(response).should == [50, 100]
+  end
+
+  it "should render a thumbnail with a signature and gravity" do
     signature = Digest::SHA1.hexdigest("/media/imagick_50x100-sw.jpgtest")[0..15]
     response  = mock_request(:keylength => 16, :secret => 'test').
                   get("/media/imagick_50x100-sw-#{ signature }.jpg")
+
+    response.should.be.ok
+    response.content_type.should == "image/jpeg"
+    image_dimensions(response).should == [50, 52]
+  end
+
+  it "should render a thumbnail with a signature, flag and gravity" do
+    signature = Digest::SHA1.hexdigest("/media/imagick_50x100!-sw.jpgtest")[0..15]
+    response  = mock_request(:keylength => 16, :secret => 'test').
+                  get("/media/imagick_50x100!-sw-#{ signature }.jpg")
 
     response.should.be.ok
     response.content_type.should == "image/jpeg"
@@ -178,10 +238,10 @@ describe Rack::Thumb do
   end
 
   it "should return the application's response if it does not recognize render options" do
-    response = mock_request.get("/media/imagick_50x50!.jpg")
+    response = mock_request.get("/media/imagick_50x50@.jpg")
 
     response.should.be.not_found
-    response.body.should == "File not found: /media/imagick_50x50!.jpg\n"
+    response.body.should == "File not found: /media/imagick_50x50@.jpg\n"
   end
 
   it "should render a thumbnail when mounted as a mapped app" do
