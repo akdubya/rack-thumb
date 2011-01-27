@@ -141,6 +141,13 @@ describe Rack::Thumb do
     response.body.should == "Bad thumbnail parameters in /media/imagick_0x50.jpg\n"
   end
 
+  it "should return bad request when width has leading zero" do
+    response = mock_request.get("/media/imagick_050x50.jpg")
+
+    response.should.be.client_error
+    response.body.should == "Bad thumbnail parameters in /media/imagick_050x50.jpg\n"
+  end
+
   it "should return bad request with height of 0" do
     response = mock_request.get("/media/imagick_50x0.jpg")
 
@@ -153,13 +160,6 @@ describe Rack::Thumb do
 
     response.should.be.client_error
     response.body.should == "Bad thumbnail parameters in /media/imagick_50x050.jpg\n"
-  end
-
-  it "should return bad request when width has leading zero" do
-    response = mock_request.get("/media/imagick_050x50.jpg")
-
-    response.should.be.client_error
-    response.body.should == "Bad thumbnail parameters in /media/imagick_050x50.jpg\n"
   end
 
   it "should return bad request if the signature is invalid" do
