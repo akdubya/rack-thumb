@@ -166,24 +166,30 @@ module Rack
     end
 
     # Renders a thumbnail from the source image. Returns a Tempfile.
-    def render_thumbnail(dim, flag, grav)
-      gravity = grav ? TH_GRAV[grav] : :center
+    def render_thumbnail(dim, flag, gravity)
+      gravity = gravity ? TH_GRAV[gravity] : :center
       width, height = parse_dimensions(dim)
       origin_width, origin_height = Mapel.info(@image.path)[:dimensions]
       width = [width, origin_width].min if width
       height = [height, origin_height].min if height
-      output = create_tempfile
 
-      cmd = Mapel(@image.path).gravity(gravity)
-      if flag == '!'
-        throw :halt, bad_request unless width && height
-        cmd.resize!(width, height)
-      else
-        cmd.resize(width, height, 0, 0, '>')
+      run_command width, height, flag, gravity
+    end
+
+    def run_command(width, height, flag, gravity)
+      create_tempfile.tap do |output|
+        Mapel(@image.path).gravity(gravity).tap do |command|
+          if flag == '!'
+            throw :halt, bad_request unless width && height
+
+            command.resize!(width, height)
+          else
+            command.resize(width, height, 0, 0, '>')
+          end
+
+          command.to(output.path).run
+        end
       end
-      cmd.to(output.path).run
-
-      output
     end
 
     # Serves the thumbnail. If this is a HEAD request we strip the body as well
