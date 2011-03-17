@@ -1,24 +1,6 @@
 require File.expand_path(File.dirname(__FILE__) + '/helpers')
 
 describe Rack::Thumb do
-  def request(options = {})
-    file_app = Rack::File.new(::File.dirname(__FILE__))
-    thumb_app = Rack::Thumb.new(file_app, options)
-    Rack::MockRequest.new(thumb_app)
-  end
-
-  def credentials
-    {:keylength => 16, :secret => "test"}
-  end
-
-  def file_content(file_path = "/media/imagick.jpg")
-    ::File.read(::File.dirname(__FILE__) + file_path)
-  end
-
-  def dimensions(response)
-    image_info(response.body)[:dimensions]
-  end
-
   it "should render a thumbnail with width only" do
     response = request.get("/media/imagick_50x.jpg")
     response.should.be.ok
