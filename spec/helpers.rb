@@ -14,8 +14,11 @@ def image_info(body)
   Mapel.info(t.path)
 end
 
+def file_app
+  @file_app ||= Rack::File.new(::File.dirname(__FILE__))
+end
+
 def request(options = {})
-  file_app = Rack::File.new(::File.dirname(__FILE__))
   thumb_app = Rack::Thumb.new(file_app, options)
   Rack::MockRequest.new(thumb_app)
 end
