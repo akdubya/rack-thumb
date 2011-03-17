@@ -90,6 +90,24 @@ may be like the following (put it into an initializer):
     :root => "#{Rails.root}/public",
     :urls => ["/media"]
 
+== Image Optimization
+
+=== Metadata Stripping
+
+If a patched version of Mapel is available, additional image metadata will be stripped,
+allowing a smaller file size. You'll find the patched version at
+http://github.com/vidibus/mapel
+
+To use the patched versions of both gems in a Rails app, equip your Gemfile with:
+
+  gem "mapel", :git => "git://github.com/vidibus/mapel.git"
+  gem "rack-thumb", :git => "git://github.com/vidibus/rack-thumb.git"
+
+If you want to preserve all metadata by default, configure the rack app:
+
+  MyRails::Application.config.middleware.use Rack::Thumb,
+    :preserve_metadata => true
+
 == Deep Thoughts
 
 <tt>Rack::Thumb</tt> respects any extra headers you set in your downstream app.
