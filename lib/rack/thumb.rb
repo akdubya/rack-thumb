@@ -79,14 +79,19 @@ module Rack
     # Generates routes given a list of prefixes.
     def generate_routes(urls, prefix = nil)
       urls.map do |url|
-        prefix = prefix ? Regexp.escape(prefix) : ''
-        url = url == "/" ? '' : Regexp.escape(url)
+        prefix = prefix ? escape_regex(prefix) : ''
+        url = url == "/" ? '' : escape_regex(url)
         if @keylen
           /^#{prefix}(#{url}\/.+)#{RE_TH_BASE}-([0-9a-f]{#{@keylen}})#{RE_TH_EXT}$/
         else
           /^#{prefix}(#{url}\/.+)#{RE_TH_BASE}#{RE_TH_EXT}$/
         end
       end
+    end
+
+    def escape_regex(input)
+      return input if input.is_a?(Regexp)
+      Regexp.escape(input)
     end
 
     def call(env)
