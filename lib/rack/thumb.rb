@@ -81,11 +81,8 @@ module Rack
       urls.map do |url|
         prefix = prefix ? escape_regex(prefix) : ''
         url = url == "/" ? '' : escape_regex(url)
-        if @keylen
-          /^#{prefix}(#{url}\/.+)#{RE_TH_BASE}-([0-9a-f]{#{@keylen}})#{RE_TH_EXT}$/
-        else
-          /^#{prefix}(#{url}\/.+)#{RE_TH_BASE}#{RE_TH_EXT}$/
-        end
+        key = @keylen ? "-([0-9a-f]{#{@keylen}})" : ""
+        /^#{prefix}(#{url}\/.+)#{RE_TH_BASE}#{key}#{RE_TH_EXT}$/
       end
     end
 
