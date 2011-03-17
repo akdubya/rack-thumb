@@ -47,7 +47,7 @@ Link to thumbnails from your templates as follows:
 
 You can turn off cropping globally by configuring the rack app:
 
-  Manager::Application.config.middleware.use Rack::Thumb,
+  MyRails::Application.config.middleware.use Rack::Thumb,
     :crop => false
 
 == URL Signing
@@ -83,10 +83,10 @@ may be like the following (put it into an initializer):
 
   require "rack/thumb"
 
-  Manager::Application.config.middleware.use Rack::Thumb,
+  MyRails::Application.config.middleware.use Rack::Thumb,
     :write => true
 
-  Manager::Application.config.middleware.use Rack::Static,
+  MyRails::Application.config.middleware.use Rack::Static,
     :root => "#{Rails.root}/public",
     :urls => ["/media"]
 
