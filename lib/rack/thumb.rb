@@ -82,7 +82,7 @@ module Rack
         prefix = prefix ? escape_regex(prefix) : ''
         url = url == "/" ? '' : escape_regex(url)
         key = @keylen ? "-([0-9a-f]{#{@keylen}})" : ""
-        /^#{prefix}(#{url}\/.+)#{RE_TH_BASE}#{key}#{RE_TH_EXT}$/
+        /^#{prefix}(#{url}.+)#{RE_TH_BASE}#{key}#{RE_TH_EXT}$/
       end
     end
 
