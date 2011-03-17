@@ -45,6 +45,26 @@ describe Rack::Thumb do
     info[:dimensions].should == [50, 100]
   end
 
+  it "should render a thumbnail with maximum width and height" do
+    request = Rack::MockRequest.new(Rack::Thumb.new(@app))
+
+    res = request.get("/media/imagick_50xx50.jpg")
+    res.should.be.ok
+    res.content_type.should == "image/jpeg"
+    info = image_info(res.body)
+    info[:dimensions].should == [48, 50]
+  end
+
+  it "should render a thumbnail with maximum width and height from standard params, if crop option was set to false" do
+    request = Rack::MockRequest.new(Rack::Thumb.new(@app, :crop => false))
+
+    res = request.get("/media/imagick_50x50.jpg")
+    res.should.be.ok
+    res.content_type.should == "image/jpeg"
+    info = image_info(res.body)
+    info[:dimensions].should == [48, 50]
+  end
+
   it "should render a thumbnail with a signature" do
     request = Rack::MockRequest.new(Rack::Thumb.new(@app, :keylength => 16,
       :secret => "test"))

@@ -33,6 +33,7 @@ module Rack
 #     /media/foobar_50x50-nw.jpg  # => Crop and resize with northwest gravity
 #     /media/foobar_50x.jpg       # => Resize to a width of 50, preserving AR
 #     /media/foobar_x50.jpg       # => Resize to a height of 50, preserving AR
+#     /media/foobar_50xx50.jpg    # => Resize to a maximum height and width of 50, preserving AR
 #
 #   To prevent pesky end-users and bots from flooding your application with
 #   render requests you can set up Rack::Thumb to check for a <tt>SHA-1</tt> signature
@@ -51,7 +52,7 @@ module Rack
 #
 
   class Thumb
-    RE_TH_BASE = /_([0-9]+x|x[0-9]+|[0-9]+x[0-9]+)(-(?:nw|n|ne|w|c|e|sw|s|se))?/
+    RE_TH_BASE = /_([0-9]+x|x[0-9]+|[0-9]+xx?[0-9]+)(-(?:nw|n|ne|w|c|e|sw|s|se))?/
     RE_TH_EXT = /(\.(?:jpg|jpeg|png|gif))/i
     TH_GRAV = {
       '-nw' => :northwest,
@@ -71,6 +72,7 @@ module Rack
       @secret = options[:secret]
       @write = options[:write]
       @routes = generate_routes(options[:urls] || ["/"], options[:prefix])
+      @crop = options[:crop]
     end
 
     # Generates routes given a list of prefixes.
@@ -177,7 +179,7 @@ module Rack
 
       output = !!@write ? create_file : create_tempfile
       cmd = Mapel(@image.path).gravity(gravity)
-      if width && height
+      if width && height && @crop == true
         cmd.resize!(width, height)
       else
         cmd.resize(width, height, 0, 0, '>')
@@ -201,7 +203,12 @@ module Rack
 
     # Parses the rendering options; returns false if rendering options are invalid
     def parse_dimensions(meta)
-      dimensions = meta.split('x').map do |dim|
+      if meta.match(/(\d*)x(x?)(\d*)/)
+        dimensions = [$1,$3]
+        @crop = $2 == "" if @crop == nil
+      end
+
+      dimensions.map! do |dim|
         if dim.empty?
           nil
         elsif dim.index('0') == 0
