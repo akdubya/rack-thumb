@@ -137,4 +137,16 @@ describe Rack::Thumb do
     response = request(:preserve_metadata => true).get("/media/imagick_100xx100.jpg")
     response.body.bytesize.should == 10936
   end
+
+  it "should accept an option to restrict files within given paths only" do
+    app = Rack::Thumb.new(file_app, :urls => ["/mediafiles/"])
+    expectation = /#{Regexp.escape('^(\/mediafiles\/.+)')}/
+    app.instance_variable_get("@routes")[0].to_s.should =~ expectation
+  end
+
+  it "should allow regular expressions in :urls option" do
+    app = Rack::Thumb.new(file_app, :urls => [/\/mediafiles\/.+\//])
+    expectation = /#{Regexp.escape('^((?-mix:\/mediafiles\/.+\/).+)')}/
+    app.instance_variable_get("@routes")[0].to_s.should =~ expectation
+  end
 end
