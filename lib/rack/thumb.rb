@@ -8,8 +8,8 @@ module Rack
 #   The Rack::Thumb middleware intercepts requests for images that have urls of
 #   the form <code>/path/to/image_{metadata}.ext</code> and returns rendered
 #   thumbnails. Rendering options include +width+, +height+ and +gravity+. If
-#   both +width+ and +height+ are supplied, images are cropped and resized
-#   to fit the aspect ratio.
+#   both +width+ and +height+ are supplied, images are resized and optionally
+#   cropped to fit the aspect ratio.
 #
 #   Rack::Thumb is file-server agnostic to provide maximum deployment
 #   flexibility. Simply set it up in front of any downstream application that
