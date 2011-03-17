@@ -127,4 +127,14 @@ describe Rack::Thumb do
     response = request.post("/media/imagick_50x50.jpg")
     response.should.not.be.successful
   end
+
+  it "should strip file metadata by default" do
+    response = request.get("/media/imagick_100xx100.jpg")
+    response.body.bytesize.should == 7774
+  end
+
+  it "should not strip file metadata if option :preserve_metadata is true" do
+    response = request(:preserve_metadata => true).get("/media/imagick_100xx100.jpg")
+    response.body.bytesize.should == 10936
+  end
 end

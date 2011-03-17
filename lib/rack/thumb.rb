@@ -73,6 +73,7 @@ module Rack
       @write = options[:write]
       @routes = generate_routes(options[:urls] || ["/"], options[:prefix])
       @crop = options[:crop]
+      @preserve_metadata = options[:preserve_metadata]
     end
 
     # Generates routes given a list of prefixes.
@@ -183,6 +184,10 @@ module Rack
         cmd.resize!(width, height)
       else
         cmd.resize(width, height, 0, 0, '>')
+      end
+      begin # strip requires a patched version of Mapel: https://github.com/vidibus/mapel
+        cmd.strip unless @preserve_metadata == true
+      rescue NoMethodError
       end
       cmd.to(output.path).run
       output
