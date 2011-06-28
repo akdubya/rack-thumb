@@ -9,9 +9,16 @@ class String
   end
 end
 
+def tempfile(body)
+  Tempfile.new("foo.jpg").tap do |f|
+    f.binmode
+    f.write(body)
+    f.close
+  end
+end
+
 def image_info(body)
-  t = Tempfile.new('foo.jpg').tap {|f| f.binmode; f.write(body); f.close }
-  Mapel.info(t.path)
+  Mapel.info(tempfile(body).path)
 end
 
 def file_app
