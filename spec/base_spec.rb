@@ -143,6 +143,16 @@ describe Rack::Thumb do
     image_exif(response.body).should.not == {}
   end
 
+  it "should auto-rotate the image by default" do
+    response = request.get("/media/rotated_50xx50.jpg")
+    dimensions(response).should == [49, 50]
+  end
+
+  it "should not auto-rotate the image if it should be served raw" do
+    response = request.get("/media/rotated_50xx50-raw.jpg")
+    dimensions(response).should == [50, 49]
+  end
+
   it "should accept an option to restrict files within given paths only" do
     app = Rack::Thumb.new(file_app, :urls => ["/mediafiles/"])
     expectation = /#{Regexp.escape('^(\/mediafiles\/.+)')}/

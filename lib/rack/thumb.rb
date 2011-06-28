@@ -192,7 +192,7 @@ module Rack
 
     # Performs the image transformation.
     #
-    # Mapel.strip requires a patched version of Mapel:
+    # Mapel.orient and Mapel.strip require a patched version of Mapel:
     #   https://github.com/vidibus/mapel
     #
     def transform_image(width, height, gravity)
@@ -204,6 +204,7 @@ module Rack
             cmd.resize(width, height, 0, 0, ">")
           end
           unless @raw
+            cmd.try(:orient)
             cmd.try(:strip) unless @preserve_metadata == true
           end
           cmd.to(output.path).run
