@@ -172,27 +172,33 @@ module Rack
       end
     end
 
-    # Renders a thumbnail from the source image. Returns a Tempfile.
+    # Renders a thumbnail from the source image.
     def render_thumbnail(dim, grav)
       gravity = grav ? TH_GRAV[grav] : :center
       width, height = parse_dimensions(dim)
       origin_width, origin_height = Mapel.info(@image.path)[:dimensions]
       width = [width, origin_width].min if width
       height = [height, origin_height].min if height
+      transform_image(width, height, gravity)
+    end
 
-      output = !!@write ? create_file : create_tempfile
-      cmd = Mapel(@image.path).gravity(gravity)
-      if width && height && @crop == true
-        cmd.resize!(width, height)
-      else
-        cmd.resize(width, height, 0, 0, '>')
+    # Performs the image transformation.
+    #
+    # Mapel.strip requires a patched version of Mapel:
+    #   https://github.com/vidibus/mapel
+    #
+    def transform_image(width, height, gravity)
+      file.tap do |output|
+        Mapel(@image.path).gravity(gravity).tap do |cmd|
+          if width && height && @crop == true
+            cmd.resize!(width, height)
+          else
+            cmd.resize(width, height, 0, 0, ">")
+          end
+          cmd.try(:strip) unless @preserve_metadata == true
+          cmd.to(output.path).run
+        end
       end
-      begin # strip requires a patched version of Mapel: https://github.com/vidibus/mapel
-        cmd.strip unless @preserve_metadata == true
-      rescue NoMethodError
-      end
-      cmd.to(output.path).run
-      output
     end
 
     # Serves the thumbnail. If this is a HEAD request we strip the body as well
@@ -204,7 +210,6 @@ module Rack
       else
         [200, @source_headers.merge("Content-Length" => ::File.size(@thumb.path).to_s), self]
       end
-
       throw :halt, response
     end
 
@@ -225,6 +230,11 @@ module Rack
         end
       end
       dimensions.any? ? dimensions : throw(:halt, bad_request)
+    end
+
+    # Returns a Tempfile or a file pointer.
+    def file
+      !!@write ? create_file : create_tempfile
     end
 
     # Creates a new tempfile
@@ -249,11 +259,11 @@ module Rack
     end
 
     def each
-      ::File.open(@thumb.path, "rb") { |file|
+      ::File.open(@thumb.path, "rb") do |file|
         while part = file.read(8192)
           yield part
         end
-      }
+      end
     end
 
     def to_path
