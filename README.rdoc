@@ -1,8 +1,9 @@
-== Rack::Thumb: Drop-in image thumbnailing for your Rack stack
+= Rack::Thumb
 
 <tt>Rack::Thumb</tt> is drop-in dynamic thumbnailing middleware for Rack-based
 applications, featuring simple configuration, optional security (via url-signing),
 and maximum flexibility.
+
 
 == Getting Started
 
@@ -29,6 +30,7 @@ behind a cache, such as the excellent <tt>Rack::Cache</tt>. Or you could
 configure <tt>Rack::Thumb</tt> to write the processed image to the location
 requested and let your Webserver perform the delivery (see Writing).
 
+
 == Rendering Options
 
 <tt>Rack::Thumb</tt> intercepts requests for images that have urls of
@@ -50,6 +52,7 @@ You can turn off cropping globally by configuring the rack app:
   MyRails::Application.config.middleware.use Rack::Thumb,
     :crop => false
 
+
 == URL Signing
 
 To prevent pesky end-users and bots from flooding your application with
@@ -70,11 +73,13 @@ Ruby's built-in <tt>Digest::SHA1</tt> library:
 
 There are no helper modules just yet but it's easy enough to roll your own.
 
+
 == Writing
 
 As a quick solution for caching you may let <tt>Rack::Thumb</tt> write a generated
 image to the location that was requested. That allows your Webserver to deliver the
 file directly without hitting your application on subsequent requests.
+
 
 === Configuration Example
 
@@ -90,11 +95,12 @@ may be like the following (put it into an initializer):
     :root => "#{Rails.root}/public",
     :urls => ["/media"]
 
+
 == Image Optimization
 
 === Metadata Stripping
 
-If a patched version of Mapel is available, additional image metadata will be stripped,
+If a patched version of <tt>Mapel</tt> is available, additional image metadata will be stripped,
 allowing a smaller file size. You'll find the patched version at
 http://github.com/vidibus/mapel
 
@@ -103,10 +109,20 @@ To use the patched versions of both gems in a Rails app, equip your Gemfile with
   gem "mapel", :git => "git://github.com/vidibus/mapel.git"
   gem "rack-thumb", :git => "git://github.com/vidibus/rack-thumb.git"
 
+If you want to preserve all metadata on a single image, call it with the <tt>-raw</tt> option:
+
+  /media/foobar_50x50-raw.jpg
+
 If you want to preserve all metadata by default, configure the rack app:
 
   MyRails::Application.config.middleware.use Rack::Thumb,
     :preserve_metadata => true
+
+=== Image orientation
+
+With the same patched version of <tt>Mapel</tt> available, images with EXIF Orientation will
+be auto-rated, unless the image is requested raw.
+
 
 == Deep Thoughts
 
@@ -117,6 +133,7 @@ skip the rendering step.
 There are a decent number of specs but the middleware isn't very strict at
 checking setup options at the moment, and I'm sure there are a few edge cases
 that need to be looked into. Comments, suggestions and bug reports are welcome.
+
 
 == Meta
 
