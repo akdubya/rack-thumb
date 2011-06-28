@@ -46,7 +46,7 @@ task :spec => :check_dependencies
 
 task :default => :spec
 
-require 'rake/rdoctask'
+require 'rdoc/task'
 Rake::RDocTask.new do |rdoc|
   rdoc.rdoc_dir = 'rdoc'
   rdoc.title = "rack-thumb #{version}"
