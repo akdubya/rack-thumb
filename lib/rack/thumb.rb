@@ -111,7 +111,6 @@ module Rack
         end
         nil
       end
-
       response || @app.call(env)
     end
 
@@ -122,7 +121,6 @@ module Rack
       else
         extract_unsigned_meta(match)
       end
-
       throw :halt unless result
       result
     end
