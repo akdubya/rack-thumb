@@ -138,6 +138,11 @@ describe Rack::Thumb do
     image_exif(response.body).should.not == {}
   end
 
+  it "should not strip file metadata if image should be served raw" do
+    response = request.get("/media/rotated_50xx50-raw.jpg")
+    image_exif(response.body).should.not == {}
+  end
+
   it "should accept an option to restrict files within given paths only" do
     app = Rack::Thumb.new(file_app, :urls => ["/mediafiles/"])
     expectation = /#{Regexp.escape('^(\/mediafiles\/.+)')}/
