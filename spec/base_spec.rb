@@ -129,13 +129,13 @@ describe Rack::Thumb do
   end
 
   it "should strip file metadata by default" do
-    response = request.get("/media/imagick_100xx100.jpg")
-    response.body.bytesize.should == 7744
+    response = request.get("/media/rotated_50xx50.jpg")
+    image_exif(response.body).should == {}
   end
 
   it "should not strip file metadata if option :preserve_metadata is true" do
-    response = request(:preserve_metadata => true).get("/media/imagick_100xx100.jpg")
-    response.body.bytesize.should == 10906
+    response = request(:preserve_metadata => true).get("/media/rotated_50xx50.jpg")
+    image_exif(response.body).should.not == {}
   end
 
   it "should accept an option to restrict files within given paths only" do
