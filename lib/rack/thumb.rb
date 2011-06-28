@@ -1,7 +1,7 @@
 require 'rack'
 require 'digest/sha1'
 require 'tempfile'
-require 'lib/rack/mapel'
+require File.dirname(File.dirname(__FILE__)) + '/rack/mapel'
 
 module Rack
 
