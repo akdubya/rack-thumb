@@ -21,6 +21,10 @@ def image_info(body)
   Mapel.info(tempfile(body).path)
 end
 
+def image_exif(body)
+  Mapel.exif(tempfile(body).path)
+end
+
 def file_app
   @file_app ||= Rack::File.new(::File.dirname(__FILE__))
 end
