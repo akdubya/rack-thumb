@@ -74,6 +74,7 @@ module Rack
       @routes = generate_routes(options[:urls] || ["/"], options[:prefix])
       @crop = options[:crop]
       @preserve_metadata = options[:preserve_metadata]
+      @ttl = options[:ttl]
     end
 
     # Generates routes given a list of prefixes.
@@ -217,7 +218,9 @@ module Rack
         @source_headers.delete("Content-Length")
         [200, @source_headers, []]
       else
-        [200, @source_headers.merge("Content-Length" => ::File.size(@thumb.path).to_s), self]
+        headers = @source_headers.merge("Content-Length" => ::File.size(@thumb.path).to_s)
+        headers["Cache-Control"] = "public, max-age=#{@ttl}" if @ttl
+        [200, headers, self]
       end
       throw :halt, response
     end
