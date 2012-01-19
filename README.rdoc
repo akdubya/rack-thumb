@@ -73,6 +73,13 @@ Ruby's built-in <tt>Digest::SHA1</tt> library:
 
 There are no helper modules just yet but it's easy enough to roll your own.
 
+== Cache-Control header
+
+You can make <tt>Rack::Thumb</tt> set the Cache-Control header, and let
+<tt>Rack::Cache</tt> cache the thumbnails. Example:
+
+  use Rack::Thumb, :ttl => 3600*24             # Will set max-age to 24 hours
+
 
 == Writing
 
