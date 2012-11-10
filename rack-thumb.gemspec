@@ -9,7 +9,7 @@ Gem::Specification.new do |gem|
   gem.version       = Rack::Thumb::VERSION
   gem.authors       = ["Aleksander Williams"]
   gem.email         = %q{alekswilliams@earthlink.net}
-  gem.description   = %q{Drop-in image thumbnailing for your Rack stack.}
+  gem.description   = %q{Rack::Thumb is drop-in dynamic thumbnailing middleware for Rack-based applications, featuring simple configuration, optional security (via url-signing), and maximum flexibility.}
   gem.summary       = %q{Drop-in image thumbnailing for your Rack stack.}
   gem.homepage      = %q{http://github.com/akdubya/rack-thumb}
 
