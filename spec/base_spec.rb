@@ -79,8 +79,7 @@ describe Rack::Thumb do
   end
 
   it "should return bad request if the signature is invalid" do
-    request = Rack::MockRequest.new(Rack::Thumb.new(@app, :keylength => 16,
-      :secret => "test"))
+    request = Rack::MockRequest.new(Rack::Thumb.new(@app, :keylength => 16, :secret => "test"))
 
     res = request.get("/media/imagick_50x100-sw-9922d04b14049f85.jpg")
     res.status.must_equal 400
@@ -112,8 +111,7 @@ describe Rack::Thumb do
   end
 
   it "should return the application's response if it does not recognize render options" do
-    request = Rack::MockRequest.new(Rack::Thumb.new(@app, :keylength => 16,
-      :secret => "test"))
+    request = Rack::MockRequest.new(Rack::Thumb.new(@app, :keylength => 16, :secret => "test"))
 
     res = request.get("/media/imagick_50x50!.jpg")
     res.status.must_equal 404
@@ -157,5 +155,27 @@ describe Rack::Thumb do
 
     res = request.post("/media/imagick_50x50.jpg")
     res.status.must_equal 405
+  end
+  
+  it "should render a thumbnail with retina multiplier" do
+    request = Rack::MockRequest.new(Rack::Thumb.new(@app))
+
+    res = request.get("/media/imagick_50x50@2x.jpg")
+    res.status.must_equal 200
+    res.content_type.must_equal "image/jpeg"
+    info = image_info(res.body)
+    info[:dimensions].must_equal [100, 100]
+  end
+  
+  it "should render a thumbnail with a signature and retina multiplier" do
+    request = Rack::MockRequest.new(Rack::Thumb.new(@app, :keylength => 16, :secret => "test"))
+
+    sig = Digest::SHA1.hexdigest("/media/imagick_50x100-sw.jpgtest")[0..15]
+    res = request.get("/media/imagick_50x100-sw-#{sig}@4x.jpg")
+    res.status.must_equal 200
+    res.content_type.must_equal "image/jpeg"
+    info = image_info(res.body)
+    info[:dimensions].must_equal [200, 400]
+
   end
 end
