@@ -68,7 +68,7 @@ module Rack
     }
 
     def initialize(app, options={})
-      @app = app
+      @app    = app
       @keylen = options[:keylength]
       @secret = options[:secret]
       @routes = generate_routes(options[:urls] || ["/"], options[:prefix])
@@ -94,7 +94,7 @@ module Rack
     def _call(env)
       response = catch(:halt) do
         throw :halt unless %w{GET HEAD}.include? env["REQUEST_METHOD"]
-        @env = env
+        @env  = env
         @path = env["PATH_INFO"]
         @routes.each do |regex|
           if match = @path.match(regex)
@@ -221,10 +221,6 @@ module Rack
           yield part
         end
       end
-    end
-
-    def to_path
-      @thumb.path
     end
   end
 end
