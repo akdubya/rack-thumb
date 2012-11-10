@@ -12,14 +12,16 @@ You will need ImageMagick and the Mapel gem (http://github.com/akdubya/mapel).
 
     gem install rack-thumb
 
-    # rackup.ru
-    require 'myapp'
-    require 'rack/thumb'
+```ruby
+# rackup.ru
+require 'myapp'
+require 'rack/thumb'
 
-    use Rack::Thumb
-    use Rack::Static, :urls => ["/media"]
+use Rack::Thumb
+use Rack::Static, :urls => ["/media"]
 
-    run MyApp.new
+run MyApp.new
+```
 
 <tt>Rack::Thumb</tt> is file-server agnostic to provide maximum deployment
 flexibility. Simply set it up in front of any application that's capable of
@@ -51,10 +53,12 @@ render requests you can set up <tt>Rack::Thumb</tt> to check for a <tt>SHA-1</tt
 signature that is unique to every url. Using this option, only thumbnails requested
 by your templates will be valid. Example:
 
-    use Rack::Thumb, {
-      :secret => "My secret",   # => Don't tell anyone!
-      :keylength => "16"        # => Only use 16 digits of the SHA-1 key
-    }
+```ruby
+use Rack::Thumb, {
+  :secret => "My secret",   # => Don't tell anyone!
+  :keylength => "16"        # => Only use 16 digits of the SHA-1 key
+}
+```
 
 You can then use your +secret+ to generate secure links in your templates using
 Ruby's built-in <tt>Digest::SHA1</tt> library:
