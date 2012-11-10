@@ -176,6 +176,16 @@ describe Rack::Thumb do
     res.content_type.must_equal "image/jpeg"
     info = image_info(res.body)
     info[:dimensions].must_equal [200, 400]
+  end
+  
+  it "should work for filenames with no extension" do
+    app = lambda { |env| [200, {"Content-Type" => "image/jpeg"}, [::File.read(::File.dirname(__FILE__) + "/media/imagick.jpg")]] }
+    request = Rack::MockRequest.new(Rack::Thumb.new(app))
 
+    res = request.get("/media/imagick_50x")
+    res.status.must_equal 200
+    res.content_type.must_equal "image/jpeg"
+    info = image_info(res.body)
+    info[:dimensions].must_equal [50, 52]
   end
 end

@@ -53,7 +53,7 @@ module Rack
 
   class Thumb
     RE_TH_BASE = /_(\d+x|x\d+|\d+x\d+)(-(?:nw|n|ne|w|c|e|sw|s|se))?/
-    RE_TH_EXT  = /(\.(?:jpg|jpeg|png|gif))/i 
+    RE_TH_EXT  = /(\.(?:jpg|jpeg|png|gif))?/i 
     RE_TH_RET  = /(?:@(\d+)x)?/
     TH_GRAV = {
       '-nw' => :northwest,
@@ -120,13 +120,13 @@ module Rack
       base, dim, grav, sig, multi, ext = match.captures
       digest = Digest::SHA1.hexdigest("#{base}_#{dim}#{grav}#{ext}#{@secret}")[0..@keylen-1]
       throw(:halt, bad_request) unless sig && (sig == digest)
-      [base + ext, dim, grav, multi]
+      [base + ext.to_s, dim, grav, multi]
     end
 
     # Extracts filename and options from an unsigned path.
     def extract_unsigned_meta(match)
       base, dim, grav, multi, ext = match.captures
-      [base + ext, dim, grav, multi]
+      [base + ext.to_s, dim, grav, multi]
     end
 
     # Fetch the source image from the downstream app, returning the downstream
