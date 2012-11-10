@@ -1,4 +1,4 @@
-# Rack::Thumb
+# Rack::Thumb [![Build Status](https://secure.travis-ci.org/max-power/rack-thumb.png?branch=master)](https://travis-ci.org/max-power/rack-thumb)
 
 ## Drop-in image thumbnailing for your Rack stack
 
