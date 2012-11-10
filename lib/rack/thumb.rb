@@ -163,15 +163,20 @@ module Rack
       origin_width, origin_height = Mapel.info(@image.path)[:dimensions]
       width  = [ width * multiplier, origin_width ].min if width
       height = [height * multiplier, origin_height].min if height
-      output = create_tempfile
-      cmd = Mapel(@image.path).strip.gravity(gravity)
-      if width && height
-        cmd.resize!(width, height)
-      else
-        cmd.resize(width, height, 0, 0, '>')
+    
+      run_command(width, height, gravity)
+    end
+   
+    def run_command(width, height, gravity)
+      Tempfile.new(::File.basename(@path)).tap do |output|
+        cmd = Mapel(@image.path).strip.gravity(gravity)
+        if width && height
+          cmd.resize!(width, height)
+        else
+          cmd.resize(width, height, 0, 0, '>')
+        end
+        cmd.to(output.path).run
       end
-      cmd.to(output.path).run
-      output
     end
 
     # Parses the rendering options; returns false if rendering options are invalid
@@ -186,11 +191,6 @@ module Rack
         end
       end
       dimensions.any? ? dimensions : throw(:halt, bad_request)
-    end
-
-    # Creates a new tempfile
-    def create_tempfile
-      Tempfile.new(::File.basename(@path)).tap { |f| f.close }
     end
     
     # Serves the thumbnail. If this is a HEAD request we strip the body as well
