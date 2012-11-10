@@ -2,6 +2,7 @@ require 'rack'
 require 'mapel'
 require 'digest/sha1'
 require 'tempfile'
+require 'rack/thumb/version'
 
 module Rack
 
