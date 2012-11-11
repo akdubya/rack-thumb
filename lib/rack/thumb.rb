@@ -198,14 +198,14 @@ module Rack
     # Serves the thumbnail. If this is a HEAD request we strip the body as well
     # as the content length because the render was never run.
     def serve
-      response = if head?
-        @source_headers.delete("Content-Length")
-        [200, @source_headers, []]
+      headers = @source_headers
+      if head?  
+        headers.delete("Content-Length")
       else
-        [200, @source_headers.merge("Content-Length" => ::File.size(@thumb.path).to_s), self]
+        headers.merge("Content-Length" => ::File.size(@thumb.path).to_s)
+        body = self
       end
-
-      throw :halt, response
+      throw :halt, [200, headers, body || []]
     end
 
     def bad_request
