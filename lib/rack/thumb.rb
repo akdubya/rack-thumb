@@ -71,6 +71,7 @@ module Rack
       @app    = app
       @keylen = options[:keylength]
       @secret = options[:secret]
+      @preserve_metadata = options[:preserve_metadata] || true
       @routes = generate_routes(options[:urls] || ["/"], options[:prefix])
     end
 
@@ -164,17 +165,18 @@ module Rack
       width  = [ width * multiplier, origin_width ].min if width
       height = [height * multiplier, origin_height].min if height
     
-      run_command(width, height, gravity)
+      transform_image(width, height, gravity)
     end
    
-    def run_command(width, height, gravity)
+    def transform_image(width, height, gravity)
       Tempfile.new(::File.basename(@path)).tap do |output|
-        cmd = Mapel(@image.path).strip.gravity(gravity)
+        cmd = Mapel(@image.path).gravity(gravity)
         if width && height
           cmd.resize!(width, height)
         else
           cmd.resize(width, height, 0, 0, '>')
         end
+        cmd.strip if cmd.respond_to?(:strip) && @preserve_metadata
         cmd.to(output.path).run
       end
     end
