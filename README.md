@@ -1,23 +1,27 @@
-== Rack::Thumb: Drop-in image thumbnailing for your Rack stack
+# Rack::Thumb [![Build Status](https://secure.travis-ci.org/max-power/rack-thumb.png?branch=master)](https://travis-ci.org/max-power/rack-thumb)
+
+## Drop-in image thumbnailing for your Rack stack
 
 <tt>Rack::Thumb</tt> is drop-in dynamic thumbnailing middleware for Rack-based
 applications, featuring simple configuration, optional security (via url-signing),
 and maximum flexibility.
 
-== Getting Started
+## Getting Started
 
 You will need ImageMagick and the Mapel gem (http://github.com/akdubya/mapel).
 
-  gem install rack-thumb
+    gem install rack-thumb
 
-  # rackup.ru
-  require 'myapp'
-  require 'rack/thumb'
+```ruby
+# rackup.ru
+require 'myapp'
+require 'rack/thumb'
 
-  use Rack::Thumb
-  use Rack::Static, :urls => ["/media"]
+use Rack::Thumb
+use Rack::Static, :urls => ["/media"]
 
-  run MyApp.new
+run MyApp.new
+```
 
 <tt>Rack::Thumb</tt> is file-server agnostic to provide maximum deployment
 flexibility. Simply set it up in front of any application that's capable of
@@ -27,7 +31,7 @@ See the example directory for more <tt>Rack</tt> configurations. Because
 thumbnailing is an expensive operation, you should run <tt>Rack::Thumb</tt>
 behind a cache, such as the excellent <tt>Rack::Cache</tt>.
 
-== Rendering Options
+## Rendering Options
 
 <tt>Rack::Thumb</tt> intercepts requests for images that have urls of
 the form <code>/path/to/image_{metadata}.ext</code> and returns rendered
@@ -37,32 +41,34 @@ to fit the aspect ratio.
 
 Link to thumbnails from your templates as follows:
 
-  /media/foobar_50x50.jpg     # => Crop and resize to 50x50
-  /media/foobar_50x50-nw.jpg  # => Crop and resize with northwest gravity
-  /media/foobar_50x.jpg       # => Resize to a width of 50, preserving AR
-  /media/foobar_x50.jpg       # => Resize to a height of 50, preserving AR
+    /media/foobar_50x50.jpg     # => Crop and resize to 50x50
+    /media/foobar_50x50-nw.jpg  # => Crop and resize with northwest gravity
+    /media/foobar_50x.jpg       # => Resize to a width of 50, preserving AR
+    /media/foobar_x50.jpg       # => Resize to a height of 50, preserving AR
 
-== URL Signing
+## URL Signing
 
 To prevent pesky end-users and bots from flooding your application with
 render requests you can set up <tt>Rack::Thumb</tt> to check for a <tt>SHA-1</tt>
 signature that is unique to every url. Using this option, only thumbnails requested
 by your templates will be valid. Example:
 
-  use Rack::Thumb, {
-    :secret => "My secret",   # => Don't tell anyone!
-    :keylength => "16"        # => Only use 16 digits of the SHA-1 key
-  }
+```ruby
+use Rack::Thumb, {
+  :secret => "My secret",   # => Don't tell anyone!
+  :keylength => "16"        # => Only use 16 digits of the SHA-1 key
+}
+```
 
 You can then use your +secret+ to generate secure links in your templates using
 Ruby's built-in <tt>Digest::SHA1</tt> library:
 
-  /media/foobar_50x100-sw-a267c193a7eff046.jpg  # => Successful
-  /media/foobar_120x250-a267c193a7eff046.jpg    # => Returns a bad request error
+    /media/foobar_50x100-sw-a267c193a7eff046.jpg  # => Successful
+    /media/foobar_120x250-a267c193a7eff046.jpg    # => Returns a bad request error
 
 There are no helper modules just yet but it's easy enough to roll your own.
 
-== Deep Thoughts
+## Deep Thoughts
 
 <tt>Rack::Thumb</tt> respects any extra headers you set in your downstream app.
 You are free to set caching policies, etc. however you like. Incoming HEAD requests
@@ -72,7 +78,7 @@ There are a decent number of specs but the middleware isn't very strict at
 checking setup options at the moment, and I'm sure there are a few edge cases
 that need to be looked into. Comments, suggestions and bug reports are welcome.
 
-== Meta
+## Meta
 
 Written by Aleks Williams (http://github.com/akdubya)
 
@@ -80,6 +86,6 @@ Credit goes to the repoze.bitblt (http://pypi.python.org/pypi/repoze.bitblt)
 team for the clever url-signing implementation. My original security scheme
 was stupidly complex.
 
-Released under the MIT License: www.opensource.org/licenses/mit-license.php
+Released under the MIT License. See LICENSE for details.
 
-github.com/akdubya/rack-thumb
+http://github.com/akdubya/rack-thumb

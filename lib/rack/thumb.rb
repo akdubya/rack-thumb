@@ -2,6 +2,7 @@ require 'rack'
 require 'mapel'
 require 'digest/sha1'
 require 'tempfile'
+require 'rack/thumb/version'
 
 module Rack
 
@@ -51,36 +52,38 @@ module Rack
 #
 
   class Thumb
-    RE_TH_BASE = /_([0-9]+x|x[0-9]+|[0-9]+x[0-9]+)(-(?:nw|n|ne|w|c|e|sw|s|se))?/
-    RE_TH_EXT = /(\.(?:jpg|jpeg|png|gif))/i
+    RE_TH_BASE = /_(\d+x|x\d+|\d+x\d+)(-(?:nw|n|ne|w|c|e|sw|s|se))?/
+    RE_TH_EXT  = /(\.(?:jpg|jpeg|png|gif))?/i 
+    RE_TH_RET  = /(?:@(\d+)x)?/
     TH_GRAV = {
       '-nw' => :northwest,
-      '-n' => :north,
+      '-n'  => :north,
       '-ne' => :northeast,
-      '-w' => :west,
-      '-c' => :center,
-      '-e' => :east,
+      '-w'  => :west,
+      '-c'  => :center,
+      '-e'  => :east,
       '-sw' => :southwest,
-      '-s' => :south,
+      '-s'  => :south,
       '-se' => :southeast
     }
 
     def initialize(app, options={})
-      @app = app
+      @app    = app
       @keylen = options[:keylength]
       @secret = options[:secret]
+      @preserve_metadata = options[:preserve_metadata] || true
       @routes = generate_routes(options[:urls] || ["/"], options[:prefix])
     end
 
     # Generates routes given a list of prefixes.
     def generate_routes(urls, prefix = nil)
+      prefix = prefix ? Regexp.escape(prefix) : ''
       urls.map do |url|
-        prefix = prefix ? Regexp.escape(prefix) : ''
         url = url == "/" ? '' : Regexp.escape(url)
         if @keylen
-          /^#{prefix}(#{url}\/.+)#{RE_TH_BASE}-([0-9a-f]{#{@keylen}})#{RE_TH_EXT}$/
+          /^#{prefix}(#{url}\/.+)#{RE_TH_BASE}-([0-9a-f]{#{@keylen}})#{RE_TH_RET}#{RE_TH_EXT}$/
         else
-          /^#{prefix}(#{url}\/.+)#{RE_TH_BASE}#{RE_TH_EXT}$/
+          /^#{prefix}(#{url}\/.+)#{RE_TH_BASE}#{RE_TH_RET}#{RE_TH_EXT}$/
         end
       end
     end
@@ -92,13 +95,13 @@ module Rack
     def _call(env)
       response = catch(:halt) do
         throw :halt unless %w{GET HEAD}.include? env["REQUEST_METHOD"]
-        @env = env
+        @env  = env
         @path = env["PATH_INFO"]
         @routes.each do |regex|
           if match = @path.match(regex)
-            @source, dim, grav = extract_meta(match)
+            @source, dim, grav, multi = extract_meta(match)
             @image = get_source_image
-            @thumb = render_thumbnail(dim, grav) unless head?
+            @thumb = render_thumbnail(dim, grav, multi) unless head?
             serve
           end
         end
@@ -110,90 +113,72 @@ module Rack
     
     # Extracts filename and options from the path.
     def extract_meta(match)
-      result = if @keylen
-        extract_signed_meta(match)
-      else
-        extract_unsigned_meta(match)
-      end
-
-      throw :halt unless result
-      result
+      (@keylen ? extract_signed_meta(match) : extract_unsigned_meta(match)) or throw :halt
     end
 
     # Extracts filename and options from a signed path.
     def extract_signed_meta(match)
-      base, dim, grav, sig, ext = match.captures
+      base, dim, grav, sig, multi, ext = match.captures
       digest = Digest::SHA1.hexdigest("#{base}_#{dim}#{grav}#{ext}#{@secret}")[0..@keylen-1]
       throw(:halt, bad_request) unless sig && (sig == digest)
-      [base + ext, dim, grav]
+      [base + ext.to_s, dim, grav, multi]
     end
 
     # Extracts filename and options from an unsigned path.
     def extract_unsigned_meta(match)
-      base, dim, grav, ext = match.captures
-      [base + ext, dim, grav]
+      base, dim, grav, multi, ext = match.captures
+      [base + ext.to_s, dim, grav, multi]
     end
 
     # Fetch the source image from the downstream app, returning the downstream
     # app's response if it is not a success.
     def get_source_image
-      status, headers, body = @app.call(@env.merge(
-        "PATH_INFO" => @source
-      ))
+      status, headers, body = @app.call(@env.merge("PATH_INFO" => @source))
 
-      unless (status >= 200 && status < 300) &&
-          (headers["Content-Type"].split("/").first == "image")
+      unless (status >= 200 && status < 300) && (headers["Content-Type"].split("/").first == "image")
         throw :halt, [status, headers, body]
       end
 
       @source_headers = headers
 
-      if !head?
-        if body.respond_to?(:path)
-          ::File.open(body.path, 'rb')
-        elsif body.respond_to?(:each)
-          data = ''
-          body.each { |part| data << part.to_s }
-          Tempfile.new(::File.basename(@path)).tap do |f|
-            f.binmode
-            f.write(data)
-            f.close
-          end
+      return nil if head?
+      
+      if body.respond_to?(:path)
+        ::File.open(body.path, 'rb')
+      elsif body.respond_to?(:each)
+        data = ''
+        body.each { |part| data << part.to_s }
+        Tempfile.new(::File.basename(@path)).tap do |f|
+          f.binmode
+          f.write(data)
+          f.close
         end
-      else
-        nil
       end
     end
 
     # Renders a thumbnail from the source image. Returns a Tempfile.
-    def render_thumbnail(dim, grav)
-      gravity = grav ? TH_GRAV[grav] : :center
+    def render_thumbnail(dim, grav, multi=1)
+      gravity       = grav ? TH_GRAV[grav] : :center
+      multiplier    = multi.to_i < 1 ? 1 : multi.to_i
       width, height = parse_dimensions(dim)
       origin_width, origin_height = Mapel.info(@image.path)[:dimensions]
-      width = [width, origin_width].min if width
-      height = [height, origin_height].min if height
-      output = create_tempfile
-      cmd = Mapel(@image.path).gravity(gravity)
-      if width && height
-        cmd.resize!(width, height)
-      else
-        cmd.resize(width, height, 0, 0, '>')
-      end
-      cmd.to(output.path).run
-      output
+      width  = [ width * multiplier, origin_width ].min if width
+      height = [height * multiplier, origin_height].min if height
+    
+      transform_image(width, height, gravity)
     end
-
-    # Serves the thumbnail. If this is a HEAD request we strip the body as well
-    # as the content length because the render was never run.
-    def serve
-      response = if head?
-        @source_headers.delete("Content-Length")
-        [200, @source_headers, []]
-      else
-        [200, @source_headers.merge("Content-Length" => ::File.size(@thumb.path).to_s), self]
+   
+    def transform_image(width, height, gravity)
+      Tempfile.new(::File.basename(@path)).tap do |output|
+        cmd = Mapel(@image.path).gravity(gravity)
+        if width && height
+          cmd.resize!(width, height)
+        else
+          cmd.resize(width, height, 0, 0, '>')
+        end
+        cmd.strip if cmd.respond_to?(:strip) && @preserve_metadata
+        cmd.to(output.path).run
       end
-
-      throw :halt, response
     end
 
     # Parses the rendering options; returns false if rendering options are invalid
@@ -209,17 +194,23 @@ module Rack
       end
       dimensions.any? ? dimensions : throw(:halt, bad_request)
     end
-
-    # Creates a new tempfile
-    def create_tempfile
-      Tempfile.new(::File.basename(@path)).tap { |f| f.close }
+    
+    # Serves the thumbnail. If this is a HEAD request we strip the body as well
+    # as the content length because the render was never run.
+    def serve
+      headers = @source_headers
+      if head?  
+        headers.delete("Content-Length")
+      else
+        headers.merge("Content-Length" => ::File.size(@thumb.path).to_s)
+        body = self
+      end
+      throw :halt, [200, headers, body || []]
     end
 
     def bad_request
       body = "Bad thumbnail parameters in #{@path}\n"
-      [400, {"Content-Type" => "text/plain",
-         "Content-Length" => body.size.to_s},
-       [body]]
+      [400, {"Content-Type" => "text/plain", "Content-Length" => body.size.to_s}, [body]]
     end
 
     def head?
@@ -227,15 +218,11 @@ module Rack
     end
 
     def each
-      ::File.open(@thumb.path, "rb") { |file|
+      ::File.open(@thumb.path, "rb") do |file|
         while part = file.read(8192)
           yield part
         end
-      }
-    end
-
-    def to_path
-      @thumb.path
+      end
     end
   end
 end
