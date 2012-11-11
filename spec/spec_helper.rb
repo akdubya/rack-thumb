@@ -47,5 +47,5 @@ def image_dimensions(response)
 end
 
 def signature
-  Digest::SHA1.hexdigest("/media/imagick_50x100-sw.jpg#{credentials[:secret]}")[0..15]
+  Digest::SHA1.hexdigest("/media/imagick_50x100-sw.jpg#{credentials[:secret]}")[0...credentials[:keylength]]
 end
