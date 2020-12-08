@@ -256,7 +256,9 @@ module Rack
 
     # Creates a file at the requested location
     def create_file
-      ::File.open(::File.join(@source_body.root, @path), "w+").tap { |f| f.close }
+      dir = ::File.dirname(@source_body.path)
+      name = ::File.basename(@path)
+      ::File.open(::File.join(dir, name), "w+").tap { |f| f.close }
     end
 
     def bad_request
