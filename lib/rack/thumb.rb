@@ -75,6 +75,7 @@ module Rack
       @crop = options[:crop]
       @preserve_metadata = options[:preserve_metadata]
       @ttl = options[:ttl]
+      @raw ||= nil
     end
 
     # Generates routes given a list of prefixes.
@@ -150,9 +151,8 @@ module Rack
     # Fetch the source image from the downstream app, returning the downstream
     # app's response if it is not a success.
     def get_source_image
-      status, headers, body = @app.call(@env.merge(
-        "PATH_INFO" => @source
-      ))
+      env = @env.merge('PATH_INFO' => @source)
+      status, headers, body = @app.call(env)
 
       unless (status >= 200 && status < 300) &&
           (headers["Content-Type"].split("/").first == "image")
